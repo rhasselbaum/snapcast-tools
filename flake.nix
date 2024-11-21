@@ -27,9 +27,9 @@
 
             installPhase = ''
               mkdir -p $out/bin
-              cp $src/src/pw_snapcast_sink.py $out/bin
-              chmod +x $out/bin/pw_snapcast_sink.py
-              makeWrapper $out/bin/pw_snapcast_sink.py $out/bin/pw-snapcast-sink \
+              cp $src/src/pw_snapcast_link.py $out/bin
+              chmod +x $out/bin/pw_snapcast_link.py
+              makeWrapper $out/bin/pw_snapcast_link.py $out/bin/pw-snapcast-link \
                 --set PATH ${pkgs.pipewire}/bin
             '';
           };
