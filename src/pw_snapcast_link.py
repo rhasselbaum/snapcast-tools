@@ -17,6 +17,11 @@ import subprocess
 import json
 import signal
 import time
+import logging
+
+
+# Nothing fancy. Let systemd do the heavy lifting.
+logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
 
 
 # The Snapcast sink node in Pipewire. It is expected to already exist.
@@ -44,15 +49,15 @@ def update_links(audio_sink_node: str, snapcast_sink_node: str, disconnect: bool
                 not disconnect
                 and ended_proc.stderr == "failed to link ports: File exists\n"
             ):
-                print(f"{src_channel} and {target_channel} were already connected.")
+                logging.warning(f"{src_channel} and {target_channel} were already connected.")
             elif (
                 disconnect
                 and ended_proc.stderr
                 == "failed to unlink ports: No such file or directory\n"
             ):
-                print(f"{src_channel} and {target_channel} were already disconnected.")
+                logging.warning(f"{src_channel} and {target_channel} were already disconnected.")
             else:
-                print(ended_proc.stderr)
+                logging.warning(ended_proc.stderr)
                 ended_proc.check_returncode()
 
 
@@ -60,7 +65,7 @@ def _init_signal_handlers():
     """SIGINT or SIGTERM throws ShutdownException for clean shutdown."""
 
     def raise_shutdown_exception(signal_num, _):
-        print(f"Received signal {signal_num}")
+        logging.info(f"Received signal {signal_num}")
         raise ShutdownException()
 
     signal.signal(signal.SIGINT, raise_shutdown_exception)
@@ -95,18 +100,17 @@ def _main():
     default_sink_name = find_default_audio_sink()
     # Link default audio sink to Snapcast
     update_links(default_sink_name, SNAPCAST_SINK_NODE, False)
-    print(f"Connected {default_sink_name} audio sink to {SNAPCAST_SINK_NODE}.")
+    logging.info(f"Connected {default_sink_name} audio sink to {SNAPCAST_SINK_NODE}.")
     _init_signal_handlers()
     try:
         while True:
             time.sleep(60)
     except ShutdownException:
-        print("Caught shutdown request.")
+        logging.info("Caught shutdown request.")
     finally:
         # Unlink default audio sink to Snapcast
-        time.sleep(2)
         update_links(default_sink_name, SNAPCAST_SINK_NODE, True)
-        print(f"Disconnect {default_sink_name} from {SNAPCAST_SINK_NODE}.")
+        logging.info(f"Disconnect {default_sink_name} from {SNAPCAST_SINK_NODE}.")
 
 
 if __name__ == "__main__":
